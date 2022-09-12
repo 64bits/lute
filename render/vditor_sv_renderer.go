@@ -120,6 +120,7 @@ func NewVditorSVRenderer(tree *parse.Tree, options *Options) *VditorSVRenderer {
 	ret.RendererFuncs[ast.NodeOpenParen] = ret.renderOpenParen
 	ret.RendererFuncs[ast.NodeCloseParen] = ret.renderCloseParen
 	ret.RendererFuncs[ast.NodeOpenBrace] = ret.renderOpenBrace
+	ret.RendererFuncs[ast.NodePipe] = ret.renderPipe
 	ret.RendererFuncs[ast.NodeCloseBrace] = ret.renderCloseBrace
 	ret.RendererFuncs[ast.NodeLinkText] = ret.renderLinkText
 	ret.RendererFuncs[ast.NodeLinkSpace] = ret.renderLinkSpace
@@ -765,6 +766,18 @@ func (r *VditorSVRenderer) renderCloseBrace(node *ast.Node, entering bool) ast.W
 		}
 		r.Tag("span", [][]string{{"class", "vditor-sv__marker--brace"}}, false)
 		r.WriteByte(lex.ItemCloseBrace)
+		r.Tag("/span", nil, false)
+	}
+	return ast.WalkContinue
+}
+
+func (r *VditorSVRenderer) renderPipe(node *ast.Node, entering bool) ast.WalkStatus {
+	if entering {
+		if ast.NodeLink == node.Parent.Type && 3 == node.Parent.LinkType {
+			return ast.WalkContinue
+		}
+		r.Tag("span", [][]string{{"class", "vditor-sv__marker--pipe"}}, false)
+		r.WriteByte(lex.ItemPipe)
 		r.Tag("/span", nil, false)
 	}
 	return ast.WalkContinue

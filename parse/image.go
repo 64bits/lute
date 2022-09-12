@@ -23,7 +23,7 @@ func (t *Tree) parseBang(ctx *InlineContext) (ret *ast.Node) {
 		ctx.pos++
 		ret = &ast.Node{Type: ast.NodeText, Tokens: ctx.tokens[startPos:ctx.pos]}
 		// 将图片开始标记符入栈
-		t.addBracket(ret, startPos+2, true, ctx)
+		t.addBracket(ret, startPos+2, true, false, ctx)
 		return
 	}
 

@@ -667,6 +667,7 @@ const (
 	NodeLinkRefDef                NodeType = 46 // 链接引用定义 [label]:
 	NodeLess                      NodeType = 47 // <
 	NodeGreater                   NodeType = 48 // >
+	NodePipe                      NodeType = 49 // |
 
 	// GFM
 

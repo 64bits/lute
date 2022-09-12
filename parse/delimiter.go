@@ -31,6 +31,7 @@ type delimiter struct {
 
 	active            bool
 	image             bool
+	wiki              bool
 	bracketAfter      bool
 	index             int
 	previousDelimiter *delimiter

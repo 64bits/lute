@@ -217,6 +217,51 @@ func (t *Tree) parseCloseBracket(ctx *InlineContext) *ast.Node {
 		return &ast.Node{Type: ast.NodeText, Tokens: closeBracket}
 	}
 
+	// Here, opener is active and not nil...so we check for wikilink
+	if opener.wiki {
+		// Check that the closing brace is doubled up
+		if ctx.pos < ctx.tokensLen && lex.ItemCloseBracket == ctx.tokens[ctx.pos] {
+			ctx.pos++
+			// Populate and return a node
+			var linkType int
+			var reflabel []byte
+			node := &ast.Node{Type: ast.NodeLink, LinkType: linkType, LinkRefLabel: reflabel}
+			node.AppendChild(&ast.Node{Type: ast.NodeOpenBracket, Tokens: opener.node.Tokens})
+			node.AppendChild(&ast.Node{Type: ast.NodeOpenBracket, Tokens: opener.node.Tokens})
+			var tmp, next *ast.Node
+			tmp = opener.node.Next
+			for nil != tmp {
+				next = tmp.Next
+				tmp.Unlink()
+				if ast.NodeText == tmp.Type {
+					res := bytes.Split(tmp.Tokens, []byte("|"))
+					t1 := &ast.Node{Type: ast.NodeLinkDest, Tokens: res[0]}
+					node.AppendChild(t1)
+					if 1 < len(res) {
+						node.AppendChild(&ast.Node{Type: ast.NodePipe, Tokens: []byte("|")})
+						t2 := &ast.Node{Type: ast.NodeLinkText, Tokens: res[1]}
+						node.AppendChild(t2)
+					}
+				}
+				tmp = next
+			}
+			node.AppendChild(&ast.Node{Type: ast.NodeCloseBracket, Tokens: closeBracket})
+			node.AppendChild(&ast.Node{Type: ast.NodeCloseBracket, Tokens: closeBracket})
+			t.processEmphasis(opener.previousDelimiter, ctx)
+			t.removeBracket(ctx)
+			opener.node.Unlink()
+			// Deactivate earlier link openers
+			opener = ctx.brackets
+			for nil != opener {
+				if !opener.image {
+					opener.active = false // deactivate this opener
+				}
+				opener = opener.previous
+			}
+			return node
+		}
+	}
+
 	isImage := opener.image
 
 	// 检查是否满足链接或者图片规则
@@ -424,13 +469,19 @@ func (t *Tree) parseCloseBracket(ctx *InlineContext) *ast.Node {
 func (t *Tree) parseOpenBracket(ctx *InlineContext) (ret *ast.Node) {
 	startPos := ctx.pos
 	ctx.pos++
+	if ctx.pos < ctx.tokensLen && lex.ItemOpenBracket == ctx.tokens[ctx.pos] {
+		ctx.pos++
+		ret = &ast.Node{Type: ast.NodeText, Tokens: ctx.tokens[startPos:ctx.pos]}
+		t.addBracket(ret, startPos+2, true, true, ctx)
+		return
+	}
 	ret = &ast.Node{Type: ast.NodeText, Tokens: ctx.tokens[startPos:ctx.pos]}
 	// 将 [ 入栈
-	t.addBracket(ret, ctx.pos-1, false, ctx)
+	t.addBracket(ret, ctx.pos-1, false, false, ctx)
 	return
 }
 
-func (t *Tree) addBracket(node *ast.Node, index int, image bool, ctx *InlineContext) {
+func (t *Tree) addBracket(node *ast.Node, index int, image bool, wiki bool, ctx *InlineContext) {
 	if nil != ctx.brackets {
 		ctx.brackets.bracketAfter = true
 	}
@@ -441,6 +492,7 @@ func (t *Tree) addBracket(node *ast.Node, index int, image bool, ctx *InlineCont
 		previousDelimiter: ctx.delimiters,
 		index:             index,
 		image:             image,
+		wiki:              wiki,
 		active:            true,
 	}
 }

@@ -82,6 +82,7 @@ func NewBlockExportRenderer(tree *parse.Tree, options *Options) *BlockExportRend
 	ret.RendererFuncs[ast.NodeLess] = ret.renderLess
 	ret.RendererFuncs[ast.NodeGreater] = ret.renderGreater
 	ret.RendererFuncs[ast.NodeOpenBrace] = ret.renderOpenBrace
+	ret.RendererFuncs[ast.NodePipe] = ret.renderPipe
 	ret.RendererFuncs[ast.NodeCloseBrace] = ret.renderCloseBrace
 	ret.RendererFuncs[ast.NodeLinkText] = ret.renderLinkText
 	ret.RendererFuncs[ast.NodeLinkSpace] = ret.renderLinkSpace
@@ -1134,6 +1135,10 @@ func (r *BlockExportRenderer) renderGreater(node *ast.Node, entering bool) ast.W
 }
 
 func (r *BlockExportRenderer) renderCloseBrace(node *ast.Node, entering bool) ast.WalkStatus {
+	return ast.WalkContinue
+}
+
+func (r *BlockExportRenderer) renderPipe(node *ast.Node, entering bool) ast.WalkStatus {
 	return ast.WalkContinue
 }
 
